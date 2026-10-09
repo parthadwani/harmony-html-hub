@@ -81,13 +81,22 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "JECRC Events Hub" },
       { name: "description", content: "JECRC campus events, passes and student activities." },
       { property: "og:title", content: "JECRC Events Hub" },
-      { property: "og:description", content: "JECRC campus events, passes and student activities." },
+      {
+        property: "og:description",
+        content: "JECRC campus events, passes and student activities.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
-      { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap' },
-      { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap' },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap",
+      },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap",
+      },
       {
         rel: "stylesheet",
         href: appCss,
