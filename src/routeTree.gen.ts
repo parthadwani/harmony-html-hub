@@ -10,33 +10,63 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as EventDetailsRouteImport } from './routes/event-details'
+import { Route as MyPassesRouteImport } from './routes/my-passes'
+import { Route as OrganizerRouteImport } from './routes/organizer'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EventDetailsRoute = EventDetailsRouteImport.update({
+  id: '/event-details',
+  path: '/event-details',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MyPassesRoute = MyPassesRouteImport.update({
+  id: '/my-passes',
+  path: '/my-passes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrganizerRoute = OrganizerRouteImport.update({
+  id: '/organizer',
+  path: '/organizer',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/event-details': typeof EventDetailsRoute
+  '/my-passes': typeof MyPassesRoute
+  '/organizer': typeof OrganizerRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/event-details': typeof EventDetailsRoute
+  '/my-passes': typeof MyPassesRoute
+  '/organizer': typeof OrganizerRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/event-details': typeof EventDetailsRoute
+  '/my-passes': typeof MyPassesRoute
+  '/organizer': typeof OrganizerRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/event-details' | '/my-passes' | '/organizer'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/event-details' | '/my-passes' | '/organizer'
+  id: '__root__' | '/' | '/event-details' | '/my-passes' | '/organizer'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  EventDetailsRoute: typeof EventDetailsRoute
+  MyPassesRoute: typeof MyPassesRoute
+  OrganizerRoute: typeof OrganizerRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +78,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/event-details': {
+      id: '/event-details'
+      path: '/event-details'
+      fullPath: '/event-details'
+      preLoaderRoute: typeof EventDetailsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/my-passes': {
+      id: '/my-passes'
+      path: '/my-passes'
+      fullPath: '/my-passes'
+      preLoaderRoute: typeof MyPassesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/organizer': {
+      id: '/organizer'
+      path: '/organizer'
+      fullPath: '/organizer'
+      preLoaderRoute: typeof OrganizerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  EventDetailsRoute: EventDetailsRoute,
+  MyPassesRoute: MyPassesRoute,
+  OrganizerRoute: OrganizerRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
