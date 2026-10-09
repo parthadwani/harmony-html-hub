@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
-import parse, { domToReact, Element, attributesToProps, type HTMLReactParserOptions, type DOMNode } from 'html-react-parser';
+import parse, { domToReact, Element as HtmlElement, attributesToProps, type HTMLReactParserOptions, type DOMNode } from 'html-react-parser';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { referenceScreens } from '@/data/reference-screens';
@@ -27,14 +27,15 @@ export function ReferenceScreen({ screen }: { screen: Screen }) {
   const [notice, setNotice] = useState('');
   const content = useMemo(() => {
     const options: HTMLReactParserOptions = { replace(node) {
-      if (!(node instanceof Element)) return;
+      if (!(node instanceof HtmlElement)) return;
       if (node.name === 'button') {
         const props = attributesToProps(node.attribs);
-        return <Button {...props} className={node.attribs.class} variant="reference" type={node.attribs.type === 'submit' ? 'submit' : 'button'}>{domToReact(node.children as DOMNode[], options)}</Button>;
+        return <Button {...props} className={node.attribs['class']} variant="reference" type={node.attribs['type'] === 'submit' ? 'submit' : 'button'}>{domToReact(node.children as DOMNode[], options)}</Button>;
       }
-      if (node.name === 'a' && navPaths.includes(node.attribs.href as typeof navPaths[number])) {
-        return <Link to={node.attribs.href as typeof navPaths[number]} className={node.attribs.class} aria-current={node.attribs['aria-current'] === 'page' ? 'page' : undefined}>{domToReact(node.children as DOMNode[], options)}</Link>;
+      if (node.name === 'a' && navPaths.includes(node.attribs['href'] as typeof navPaths[number])) {
+        return <Link to={node.attribs['href'] as typeof navPaths[number]} className={node.attribs['class']} aria-current={node.attribs['aria-current'] === 'page' ? 'page' : undefined}>{domToReact(node.children as DOMNode[], options)}</Link>;
       }
+      return undefined;
     } };
     return parse(referenceScreens[screen], options);
   }, [screen]);
@@ -65,14 +66,14 @@ export function ReferenceScreen({ screen }: { screen: Screen }) {
     const venues = [2,5,3,2,4,6]; const clubs = [1,3,4,2,5,6];
     const filter = () => {
       let count = 0;
-      articles.forEach((a, i) => { const visible = (category === 'All Events' || categories[i] === category) && a.textContent?.toLowerCase().includes(search) && (!venue || venues[i] === venue) && (!club || clubs[i] === club) && (!savedOnly || a.dataset.saved === 'true'); a.classList.toggle('hidden', !visible); if (visible) count++; });
+      articles.forEach((a, i) => { const visible = (category === 'All Events' || categories[i] === category) && a.textContent?.toLowerCase().includes(search) && (!venue || venues[i] === venue) && (!club || clubs[i] === club) && (!savedOnly || a.dataset['saved'] === 'true'); a.classList.toggle('hidden', !visible); if (visible) count++; });
       let empty = q('.reference-empty');
       if (!empty && articles[0]?.parentElement) { empty = document.createElement('div'); empty.className = 'reference-empty'; articles[0].parentElement.append(empty); }
       if (empty) { empty.textContent = 'No events match your filters.'; empty.classList.toggle('hidden', count > 0); }
       const label = all('span').find(x => x.textContent?.startsWith('Showing 6 of 42')); if (label) label.textContent = `Showing ${count} of 42 Featured Events`;
     };
     all('article').forEach(a => {
-      const save = document.createElement('button'); save.type = 'button'; save.className = 'absolute top-3 right-3 p-1.5 rounded-lg bg-surface-container-lowest text-primary';save.setAttribute('aria-label','Save event');save.dataset.saveEvent='true';
+      const save = document.createElement('button'); save.type = 'button'; save.className = 'absolute top-3 right-3 p-1.5 rounded-lg bg-surface-container-lowest text-primary';save.setAttribute('aria-label','Save event');save.dataset['saveEvent']='true';
       const icon=document.createElement('span');icon.className='material-symbols-outlined';icon.textContent='bookmark_add';save.append(icon);a.firstElementChild?.append(save);
     });
     if (screen === 'details') {
@@ -90,19 +91,19 @@ export function ReferenceScreen({ screen }: { screen: Screen }) {
       const el = event.target instanceof Element ? event.target.closest<HTMLElement>('button,a,[data-tab]') : null;
       if (!el || !container.contains(el)) return;
       const text = el.textContent?.trim() || ''; const id = el.id;
-      if (el.dataset.saveEvent) {const a=el.closest('article');if(a){a.dataset.saved=String(a.dataset.saved!=='true');el.setAttribute('aria-label',a.dataset.saved==='true'?'Unsave event':'Save event');el.firstElementChild && (el.firstElementChild.textContent=a.dataset.saved==='true'?'bookmark':'bookmark_add');}return;}
+      if (el.dataset['saveEvent']) {const a=el.closest('article');if(a){a.dataset['saved']=String(a.dataset['saved']!=='true');el.setAttribute('aria-label',a.dataset['saved']==='true'?'Unsave event':'Save event');el.firstElementChild && (el.firstElementChild.textContent=a.dataset['saved']==='true'?'bookmark':'bookmark_add');}return;}
       if (el.matches('a') && el.getAttribute('href') === '#') { event.preventDefault(); if(text.includes('Host an Event')) void navigate({to:'/organizer'});else if(text.includes('Home'))void navigate({to:'/'});else if(text.includes('Calendar'))setModal({title:'Campus Calendar',body:'March 28–30 · Hack-JECRC 3.0\nApril 5 · GenAI on AWS Cloud\nApril 10–13 · Renaissance 2025',kind:'schedule'});else setModal({title:text,body:'This campus resource is not connected in the reference preview.'});return; }
       if (el.classList.contains('category-pill')) {category=text;activate(all('.category-pill'),el);filter();return;}
-      if (el.dataset.action?.startsWith('switchEventTab')) {const tab=el.dataset.action.match(/'([^']+)'/)?.[1];all('[id^="tab-content-"]').forEach(p=>{p.classList.toggle('hidden',p.id!==`tab-content-${tab}`);p.classList.toggle('flex',p.id===`tab-content-${tab}`);});activate(all('#eventTabNav button'),el);return;}
-      if(el.dataset.action?.startsWith('updateMemberCount')) {const size=Number(el.dataset.action.match(/\d+/)?.[0]);const team=q('#dynamicTeammates');if(team){team.replaceChildren();teammateNumbers(size).forEach(n=>{const div=document.createElement('div');const label=document.createElement('label');label.textContent=`Teammate ${n} Email`;label.htmlFor=`teammate-${n}`;label.className='block text-label-sm text-secondary uppercase mb-1';const input=document.createElement('input');input.id=`teammate-${n}`;input.type='email';input.required=true;input.placeholder=`member${n}@jecrc.ac.in`;input.className='w-full px-3 py-1.5 rounded-lg bg-surface text-on-surface text-body-sm';div.append(label,input);team.append(div);});activate(all('.size-btn'),el);}return;}
+      if (el.dataset['action']?.startsWith('switchEventTab')) {const tab=el.dataset['action'].match(/'([^']+)'/)?.[1];all('[id^="tab-content-"]').forEach(p=>{p.classList.toggle('hidden',p.id!==`tab-content-${tab}`);p.classList.toggle('flex',p.id===`tab-content-${tab}`);});activate(all('#eventTabNav button'),el);return;}
+      if(el.dataset['action']?.startsWith('updateMemberCount')) {const size=Number(el.dataset['action'].match(/\d+/)?.[0]);const team=q('#dynamicTeammates');if(team){team.replaceChildren();teammateNumbers(size).forEach(n=>{const div=document.createElement('div');const label=document.createElement('label');label.textContent=`Teammate ${n} Email`;label.htmlFor=`teammate-${n}`;label.className='block text-label-sm text-secondary uppercase mb-1';const input=document.createElement('input');input.id=`teammate-${n}`;input.type='email';input.required=true;input.placeholder=`member${n}@jecrc.ac.in`;input.className='w-full px-3 py-1.5 rounded-lg bg-surface text-on-surface text-body-sm';div.append(label,input);team.append(div);});activate(all('.size-btn'),el);}return;}
       if (id==='clubSelectBtn') {q('#clubDropdownMenu')?.classList.toggle('hidden');return;}
-      if(el.classList.contains('club-option')) {const name=el.dataset.club || text.replace('check','').trim();const label=q('#activeClubName');if(label)label.textContent=name;q('#clubDropdownMenu')?.classList.add('hidden');setNotice(`Selected ${name}`);return;}
+      if(el.classList.contains('club-option')) {const name=el.dataset['club'] || text.replace('check','').trim();const label=q('#activeClubName');if(label)label.textContent=name;q('#clubDropdownMenu')?.classList.add('hidden');setNotice(`Selected ${name}`);return;}
       if(id==='createEventModalBtn') {q('#eventModal')?.classList.remove('hidden');return;}
       if(id==='closeEventModalBtn'||id==='cancelModalBtn') {q('#eventModal')?.classList.add('hidden');return;}
       if(id==='broadcastScrollBtn') {q('#broadcastComposer')?.scrollIntoView({behavior:'smooth',block:'center'});q('#broadcastSubject')?.focus();return;}
       if(id==='exportCsvBtn') {const blob=new Blob(['Name,Event,Status\nPriya Sharma,Hack-JECRC 3.0,Registered\nTeam CyberKnights,Hack-JECRC 3.0,Verified\nRohan Verma,DSA Bootcamp,Waitlisted'],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='jecrc-reference-attendees.csv';a.click();URL.revokeObjectURL(url);setNotice('Reference attendee list downloaded.');return;}
       if(id==='openScannerBtn'||text.includes('Scan Gate Token')||text==='qr_code') {setModal({title:'Digital Gate Token',body:'Hack-JECRC 3.0\nAarav Sharma · Team ByteForge\nPass #JECRC-HACK-8841\nLab 4 · Table 12\nReference token: 9482-ADF0',kind:'pass'});return;}
-      if (el.dataset.tab) {activate(all('.tab-btn'),el);if(el.dataset.tab==='timeline')setModal({title:'My Schedule & Calendar',body:'March 28 · 08:30 AM — Gate 1 check-in & kit collection\n10:00 AM — Opening keynote at Audi 2\n12:00 PM — Hacking begins at Lab 4\nMarch 29 · 08:00 PM — Code freeze\nMarch 30 · 10:00 AM — Demo expo & awards',kind:'schedule'});if(el.dataset.tab==='past')setModal({title:'Past Events & Attendance',body:'Smart India Internal Hackathon 2024 · Attended\nRoboSoccer Championship 2024 · Attended\nCampus participation records shown in this reference preview.'});if(el.dataset.tab==='certs')all('h2,h3').find(h=>h.textContent?.includes('Verified Credentials'))?.scrollIntoView({behavior:'smooth',block:'center'});return;}
+      if (el.dataset['tab']) {activate(all('.tab-btn'),el);if(el.dataset['tab']==='timeline')setModal({title:'My Schedule & Calendar',body:'March 28 · 08:30 AM — Gate 1 check-in & kit collection\n10:00 AM — Opening keynote at Audi 2\n12:00 PM — Hacking begins at Lab 4\nMarch 29 · 08:00 PM — Code freeze\nMarch 30 · 10:00 AM — Demo expo & awards',kind:'schedule'});if(el.dataset['tab']==='past')setModal({title:'Past Events & Attendance',body:'Smart India Internal Hackathon 2024 · Attended\nRoboSoccer Championship 2024 · Attended\nCampus participation records shown in this reference preview.'});if(el.dataset['tab']==='certs')all('h2,h3').find(h=>h.textContent?.includes('Verified Credentials'))?.scrollIntoView({behavior:'smooth',block:'center'});return;}
       if(text.includes('Download')) {void downloadPdf(text.includes('Certificate')?'Verified Certificate':'Digital Event Pass','Aarav Sharma · JECRC / 21EJCCS042\nHack-JECRC 3.0 · Team ByteForge\nMarch 28–30, 2025\nLab 4, Table 12 · Gate 1\nPass #JECRC-HACK-8841');return;}
       if(/Register Team|Register Now|Book Pass|Claim Seat|Register Squad|Submit Deck|Explore Fest/.test(text)) {void navigate({to:'/event-details'});return;}
       if(text.includes('Watch Teaser')) {setModal({title:'Renaissance 2025',body:'March 24–27, 2025 · Central Lawns & Audi-1\nThe reference includes a festival image, but no teaser video.',kind:'teaser'});return;}
@@ -124,7 +125,7 @@ export function ReferenceScreen({ screen }: { screen: Screen }) {
       if(form.id==='broadcastForm'){setNotice('Notice prepared for preview. SMS and push delivery are not connected.');return;}
       setNotice('Subscription preview complete. No email service is connected.');
     };
-    const change=(event: Event)=>{const el=event.target;if(!(el instanceof HTMLSelectElement)||screen!=='explore')return;const selects=container.querySelectorAll('select');const i=Array.from(selects).indexOf(el);if(i===0)venue=el.selectedIndex;if(i===1)club=el.selectedIndex;if(i===2&&articles[0]?.parentElement){const order=el.selectedIndex===1?[2,0,1,4,5,3]:el.selectedIndex===2?[4,2,0,3,5,1]:[0,1,2,3,4,5];order.forEach(index=>{if(articles[index])articles[0].parentElement?.append(articles[index]);});}filter();};
+    const change=(event: Event)=>{const el=event.target;if(!(el instanceof HTMLSelectElement)||screen!=='explore')return;const selects=container.querySelectorAll('select');const i=Array.from(selects).indexOf(el);if(i===0)venue=el.selectedIndex;if(i===1)club=el.selectedIndex;if(i===2&&articles[0]?.parentElement){const order=el.selectedIndex===1?[2,0,1,4,5,3]:el.selectedIndex===2?[4,2,0,3,5,1]:[0,1,2,3,4,5];order.forEach(index=>{const article=articles[index];const parent=articles[0]?.parentElement;if(article&&parent)parent.append(article);});}filter();};
     const input=(event: Event)=>{const el=event.target;if(el instanceof HTMLInputElement&&el.placeholder.includes('Search events')){search=el.value.toLowerCase();if(screen==='explore')filter();}};
     container.addEventListener('click',click);container.addEventListener('submit',submit);container.addEventListener('change',change);container.addEventListener('input',input);
     return ()=>{container.removeEventListener('click',click);container.removeEventListener('submit',submit);container.removeEventListener('change',change);container.removeEventListener('input',input);all('[data-save-event]').forEach(b=>b.remove());};
